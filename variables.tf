@@ -35,10 +35,11 @@ variable "db_username" {
 
 variable "db_password" {
   type      = string
+  default   = "password"
   sensitive = true
 
   validation {
-    condition     = length(var.db_password) >= 5
-    error_message = "db_password must be at least 5 characters long."
+    condition     = length(var.db_password) >= 8
+    error_message = "db_password must be at least 8 characters long."
   }
 }
