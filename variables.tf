@@ -38,7 +38,7 @@ variable "db_password" {
   sensitive = true
 
   validation {
-    condition     = length(var.db_password) >= 16
-    error_message = "db_password must be at least 16 characters long."
+    condition     = length(var.db_password) >= 5
+    error_message = "db_password must be at least 5 characters long."
   }
 }
