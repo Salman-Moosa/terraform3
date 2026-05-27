@@ -30,11 +30,15 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
 }
 
 resource "aws_cloudwatch_log_group" "app1_logs" {
-  name = "/ecs/${var.project_name}/app1"
+  name              = "/ecs/${var.project_name}/app1"
+  retention_in_days = 30
+  skip_destroy      = true
 }
 
 resource "aws_cloudwatch_log_group" "ngnix_logs" {
-  name = "/ecs/${var.project_name}/nginx"
+  name              = "/ecs/${var.project_name}/nginx"
+  retention_in_days = 30
+  skip_destroy      = true
 }
 
 resource "aws_ecs_task_definition" "app1" {
