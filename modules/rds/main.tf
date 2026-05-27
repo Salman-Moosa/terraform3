@@ -11,12 +11,9 @@ resource "aws_db_instance" "postgres" {
   identifier                   = "${var.project_name}-postgres"
   engine                       = "postgres"
   engine_version               = "15.18"
-  instance_class               = "db.t3.small"
+  instance_class               = "db.t3.micro"
   allocated_storage            = 20
-  max_allocated_storage        = 100
-  storage_type                 = "gp3"
-  iops                         = 3000
-  storage_throughput           = 125
+  storage_type                 = "gp2"
   db_name                      = "postgres"
   username                     = var.db_username
   password                     = var.db_password
@@ -24,17 +21,12 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids       = [var.rds_sg_id]
   publicly_accessible          = true
   multi_az                     = false
-  backup_retention_period      = 7
-  backup_window                = "03:00-04:00"
-  maintenance_window           = "sun:04:00-sun:05:00"
+  backup_retention_period      = 0
   auto_minor_version_upgrade   = true
-  copy_tags_to_snapshot        = true
-  deletion_protection          = true
-  final_snapshot_identifier    = "${var.project_name}-postgres-final-snapshot"
-  skip_final_snapshot          = false
-  apply_immediately            = false
-  performance_insights_enabled = true
-  storage_encrypted            = true
+  deletion_protection          = false
+  skip_final_snapshot          = true
+  apply_immediately            = true
+  performance_insights_enabled = false
 
   tags = {
     Name = "${var.project_name}-postgres"

@@ -29,45 +29,20 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_secretsmanager_secret" "database_uri" {
-  name = "${var.project_name}/app1/database-uri"
-}
-
-resource "aws_secretsmanager_secret_version" "database_uri" {
-  secret_id     = aws_secretsmanager_secret.database_uri.id
-  secret_string = "postgresql+psycopg2://${var.db_username}:${var.db_password}@${var.db_endpoint}/postgres"
-}
-
-resource "aws_iam_role_policy" "ecs_execution_secrets" {
-  name = "${var.project_name}-ecs-execution-secrets"
-  role = aws_iam_role.ecs_execution_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["secretsmanager:GetSecretValue"]
-      Resource = aws_secretsmanager_secret.database_uri.arn
-    }]
-  })
-}
-
 resource "aws_cloudwatch_log_group" "app1_logs" {
-  name              = "/ecs/${var.project_name}/app1"
-  retention_in_days = 30
+  name = "/ecs/${var.project_name}/app1"
 }
 
 resource "aws_cloudwatch_log_group" "ngnix_logs" {
-  name              = "/ecs/${var.project_name}/nginx"
-  retention_in_days = 30
+  name = "/ecs/${var.project_name}/nginx"
 }
 
 resource "aws_ecs_task_definition" "app1" {
   family                   = "${var.project_name}-app1"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "512"
-  memory                   = "1024"
+  cpu                      = "256"
+  memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
 
   container_definitions = jsonencode([
@@ -76,10 +51,8 @@ resource "aws_ecs_task_definition" "app1" {
       image        = "salmansallu10/task1:latest"
       essential    = true
       portMappings = [{ containerPort = 5000, hostPort = 5000, protocol = "tcp" }]
-      secrets = [
-        { name = "DATABASE_URI", valueFrom = aws_secretsmanager_secret.database_uri.arn }
-      ]
       environment = [
+        { name = "DATABASE_URI", value = "postgresql+psycopg2://${var.db_username}:${var.db_password}@${var.db_endpoint}/postgres" },
         { name = "APP_HOST", value = "0.0.0.0" },
         { name = "REDIS_HOST", value = "none" },
         { name = "REDIS_PORT", value = "6379" },
@@ -108,8 +81,8 @@ resource "aws_ecs_task_definition" "ngnix" {
   family                   = "${var.project_name}-nginx"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "512"
-  memory                   = "1024"
+  cpu                      = "256"
+  memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
 
   container_definitions = jsonencode([
@@ -134,7 +107,7 @@ resource "aws_ecs_service" "app1_service" {
   name            = "${var.project_name}-app1"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.app1.arn
-  desired_count   = 2
+  desired_count   = 1
   launch_type     = "FARGATE"
 
   deployment_maximum_percent         = 200
@@ -164,7 +137,7 @@ resource "aws_ecs_service" "ngnix_service" {
   name            = "${var.project_name}-nginx"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.ngnix.arn
-  desired_count   = 2
+  desired_count   = 1
   launch_type     = "FARGATE"
 
   deployment_maximum_percent         = 200
